@@ -1,3 +1,5 @@
+<img align="right" width="228" height="200" src="/images/chester_logs.png">
+
 # Chester
 
 Chester is a tool aiming at automatically launching experiments. This tool based on rllab(https://github.com/rll/rllab ), and further extended for launching and retrieving experiments in different remote machines, including:
@@ -8,11 +10,11 @@ Chester is a tool aiming at automatically launching experiments. This tool based
 
 We've provided an example for launching experiments of openai/baseline's DDPG algorithm.
 
-Look into the /examples, you'll find 'train_luanch.py' and 'train.py'. 'train.py' is the parser where we copied a lot of codes in openai/baseline/ddpg/main.py and combined them as a function 'run_task'. 'run_task' receives the parameters and start running the DDPG algorithm with those given settings. 
+Look into the /examples, you'll find 'train_luanch.py' and 'train.py'. 'train.py' is the parser where we copied a lot of codes in openai/baseline/ddpg/main.py and combined them as a function 'run_task'. 'run_task' receives the parameters and start running the DDPG algorithm with those given settings.
 
-The launcher 'train_launch.py' uses our chester and the 'run_task' function to launch a group of experiments locally. By running this launcher, the group experiments are started and the resutls are contained in one given folder. Those result files are able to be visulized with rllab's viskit. 
+The launcher 'train_launch.py' uses our chester and the 'run_task' function to launch a group of experiments locally. By running this launcher, the group experiments are started and the resutls are contained in one given folder. Those result files are able to be visulized with rllab's viskit.
 
-To support different options in visulization, chester provided self-written interface 'preset.py'. The author can write different custom splitters in this file and put it in the directory for experiments. The viskit tool can detect this preset file and apply different options. 
+To support different options in visulization, chester provided self-written interface 'preset.py'. The author can write different custom splitters in this file and put it in the directory for experiments. The viskit tool can detect this preset file and apply different options.
 
 
 ### Prerequisites
@@ -23,7 +25,7 @@ What things you need to install the software and how to install them
 Give examples
 ```
 
-### Installation 
+### Installation
 
 A step by step series of examples that tell you how to get a development env running
 
@@ -77,7 +79,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
 
 ## Authors
 
