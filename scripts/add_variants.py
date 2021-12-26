@@ -3,7 +3,6 @@ import argparse
 import os
 import json
 from pydoc import locate
-import config
 
 
 def main():
@@ -12,7 +11,7 @@ def main():
     parser.add_argument('key', type=str, help='Name of the additional key')
     parser.add_argument('value', help='Value of the additional key')
     parser.add_argument('value_type', default='str', type=str, help='Type of the additional key')
-    parser.add_argument('remote', nargs='?', default=None, type=str, ) # Optional
+    parser.add_argument('remote', nargs='?', default=None, type=str, )  # Optional
 
     args = parser.parse_args()
     exp_paths = [x[0] for x in os.walk(args.exp_folder, followlinks=True)]
