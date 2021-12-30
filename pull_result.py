@@ -18,7 +18,7 @@ if __name__ == "__main__":
     if args.folder.rfind('/') !=-1:
         local_dir = os.path.join('./data', args.host, args.folder[:args.folder.rfind('/')])
     else:
-        local_dir = os.path.join('./data', args.host, args.folder)
+        local_dir = os.path.join('./data', args.host)
     remote_data_dir = os.path.join(config.REMOTE_DIR[args.host], 'data', 'local', args.folder)
     command = """rsync -avzh --delete --progress {host}:{remote_data_dir} {local_dir}""".format(host=args.host,
                                                                                                 remote_data_dir=remote_data_dir,
