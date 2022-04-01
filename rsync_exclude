@@ -1,3 +1,9 @@
+PointFlow/data
+PointFlow/metrics/pytorch_structural_losses
+PointFlow/pretrained_models
+PointFlow/torchdiffeq
+PointFlow/checkpoints
+PointFlow/runs
 wandb
 *.img
 datasets

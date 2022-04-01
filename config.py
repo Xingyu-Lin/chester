@@ -8,13 +8,13 @@ LOG_DIR = os.path.join(PROJECT_PATH, "data")
 
 # Make sure to use absolute path
 REMOTE_DIR = {
-    'seuss': '/home/xlin3/Projects/PlasticineLab',
-    'autobot': '/home/xlin3/Projects/PlasticineLab',
-    'psc': '/home/xlin3/Projects/PlasticineLab',
-    'nsh': '/home/xingyu/Projects/PlasticineLab',
-    'yertle': '/home/xingyu/Projects/PlasticineLab',
-    'satori': '/home/xingyu/Projects/PlasticineLab',
-    'csail': '/data/vision/torralba/scratch/chuang/xingyu/Projects/PlasticineLab'
+    'seuss': '/home/xlin3/Projects/dynamic_abstraction',
+    'autobot': '/home/xlin3/Projects/dynamic_abstraction',
+    'psc': '/home/xlin3/Projects/dynamic_abstraction',
+    'nsh': '/home/xingyu/Projects/dynamic_abstraction',
+    'yertle': '/home/xingyu/Projects/dynamic_abstraction',
+    'satori': '/home/xingyu/Projects/dynamic_abstraction',
+    'csail': '/data/vision/torralba/scratch/chuang/xingyu/Projects/dynamic_abstraction'
 }
 
 REMOTE_MOUNT_OPTION = {
