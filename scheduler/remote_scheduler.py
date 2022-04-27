@@ -5,7 +5,7 @@ import pickle
 import time
 from chester import config
 from chester.utils_logger import timelog
-
+import sys
 check_interval = 10  # Check every 10 seconds for available GPUs
 
 
@@ -27,13 +27,14 @@ def check_available_nodes():
 
 if __name__ == '__main__':
     while 1:
+        timelog('Scheduler checking available GPUs...')
         # check jobs in the queue
         tasks = glob.glob(os.path.join(config.CHESTER_QUEUE_DIR, '*'))
         tasks_with_time = [(os.path.getmtime(t), t) for t in tasks if os.path.isfile(t)]
         sorted_tasks = sorted(tasks_with_time)
         # check if any GPUs are available
         available_GPUs = check_available_nodes()  # Dictionary: {node_name, [available_gpu_id])...]
-        available_GPUS = {'autobot-0-25': [0, 1, 2, 3, 4, 5, 6, 7, 8]}  # Temporary
+        available_GPUs = {'autobot-0-29': [0, 1, 2, 3, 4, 5, 6, 7, 8]}  # Temporary
         timelog('Available GPUs: ' + str(available_GPUs))
 
         succ_tasks = 0
@@ -73,4 +74,5 @@ if __name__ == '__main__':
         if succ_tasks == len(sorted_tasks):
             timelog(f'All {succ_tasks} jobs done!')
             break
+        sys.stdout.flush()
         time.sleep(check_interval)

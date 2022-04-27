@@ -471,7 +471,8 @@ def run_experiment_lite(
                 mount_options=config.REMOTE_MOUNT_OPTION[mode],
                 compile_script=compile_script,
                 wait_compile=wait_compile,
-                set_egl_gpu=True
+                set_egl_gpu=True,
+                slurm_exists=False
             )
             if print_command:
                 print("; ".join(command_list))
