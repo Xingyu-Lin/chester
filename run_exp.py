@@ -17,7 +17,7 @@ from chester import config, config_ec2
 
 from chester.slurm import to_slurm_command
 from chester.utils_s3 import launch_ec2, s3_sync_code
-from config import AUTOBOT_NODELIST
+
 
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
@@ -161,7 +161,10 @@ class VariantGenerator(object):
         ret = list(self.ivariants())
         if randomized:
             np.random.shuffle(ret)
-        return list(map(self.variant_dict, ret))
+        ret = list(map(self.variant_dict, ret))
+
+        ret[-1]['chester_last_variant'] = True
+        return ret
 
     def variant_dict(self, variant):
         return VariantDict(variant, self._hidden_keys)
@@ -282,6 +285,7 @@ def run_experiment_lite(
     :param variant: If provided, should be a dictionary of parameters
     :param
     """
+    last_variant = variant.pop('chester_last_variant', False)
     if mode == 'singularity':
         mode = 'local_singularity'
     assert stub_method_call is not None or batch_tasks is not None, "Must provide at least either stub_method_call or batch_tasks"
@@ -446,14 +450,11 @@ def run_experiment_lite(
             # query_yes_no('Confirm: Syncing code to {}:{}'.format(mode, remote_dir))
             rsync_code(remote_host=mode, remote_dir=remote_dir)
             data_dir = os.path.join('data', 'local', exp_prefix, task['exp_name'])
-            # if mode == 'psc' and use_gpu:
-            #     header = config.REMOTE_HEADER[mode + '_gpu']
-            # else:
-            #     header = config.REMOTE_HEADER[mode]
-            header = '#nodelist ' + ','.join(AUTOBOT_NODELIST)
-            # TODO: redirect stdout and stderr to different log files
-            header = header + "\n#SBATCH -o " + os.path.join(remote_dir, data_dir, 'slurm.out') + " # STDOUT"
-            header = header + "\n#SBATCH -e " + os.path.join(remote_dir, data_dir, 'slurm.err') + " # STDERR"
+            remote_script_name = os.path.join(remote_dir, data_dir, task['exp_name'])
+            header = '#CHESTERNODE ' + ','.join(config.AUTOBOT_NODELIST)
+            header = header + "\n#CHESTEROUT " + os.path.join(remote_dir, data_dir, 'chester.out')
+            header = header + "\n#CHESTERERR " + os.path.join(remote_dir, data_dir, 'chester.err')
+            header = header + "\n#CHESTERSCRIPT " + remote_script_name
             if simg_dir.find('$') == -1:
                 simg_dir = osp.join(remote_dir, simg_dir)
 
@@ -462,7 +463,7 @@ def run_experiment_lite(
                 use_gpu=use_gpu,
                 modules=config.MODULES[mode],
                 cuda_module=config.CUDA_MODULE[mode],
-                header='',
+                header=header,
                 python_command=python_command,
                 script=osp.join(remote_dir, script),
                 simg_dir=simg_dir,
@@ -476,15 +477,30 @@ def run_experiment_lite(
                 print("; ".join(command_list))
             command = "\n".join(command_list)
             script_name = './' + task['exp_name']
-            remote_script_name = os.path.join(remote_dir, data_dir, task['exp_name'])
+            scheduler_script_name = os.path.join(config.CHESTER_QUEUE_DIR, task['exp_name'])
             with open(script_name, 'w') as f:
                 f.write(command)
             os.system("ssh {host} \'{cmd}\'".format(host=mode, cmd='mkdir -p ' + os.path.join(remote_dir, data_dir)))
+            os.system("ssh {host} \'{cmd}\'".format(host=mode, cmd='mkdir -p ' + config.CHESTER_QUEUE_DIR))
             os.system('scp {f1} {host}:{f2}'.format(f1=script_name, f2=remote_script_name, host=mode))  # Copy script
-            if not dry:
-                os.system("ssh " + mode + " \'sbatch " + remote_script_name + "\'")  # Launch
+            os.system('scp {f1} {host}:{f2}'.format(f1=script_name, f2=scheduler_script_name, host=mode))
             # Cleanup
             os.remove(script_name)
+            # Open scheduler if all jobs have been submitted
+            # Remote end will only open another scheduler when there is not one running already
+            # Redirect the output of the remote scheduler to the log file
+            if last_variant:
+                os.system("ssh {host} \'{cmd}\'".format(host=mode, cmd='mkdir -p ' + config.CHESTER_CHEDULER_LOG_DIR))
+                t = datetime.datetime.now(dateutil.tz.tzlocal()).strftime('%Y_%m_%d_%H_%M_%S')
+                # log_file = os.path.join(config.CHESTER_CHEDULER_LOG_DIR, f'{t}.txt')
+                log_file = os.path.join(config.CHESTER_CHEDULER_LOG_DIR, 'log.txt')
+                cmd = "ssh {host} \'{cmd} > {output}&\'".format(host=mode,
+                                                                cmd=f'cd {remote_dir} && . ./prepare_1.0.sh && nohup python chester/scheduler/remote_scheduler.py',
+                                                                output=log_file)
+                if dry:
+                    print(cmd)
+                else:
+                    os.system(cmd)
     elif mode == 'csail':
         # Launcher is running on the compute node, so no needed to sync codes
         available_nodes = []
