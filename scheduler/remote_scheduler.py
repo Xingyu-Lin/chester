@@ -6,7 +6,24 @@ import time
 from chester import config
 from chester.utils_logger import timelog
 import sys
+import psutil
 check_interval = 10  # Check every 10 seconds for available GPUs
+user_name = 'xlin3'
+
+
+def checkIfProcessRunning(processName):
+    '''
+    Check if there is any running process that contains the given name processName.
+    '''
+    # Iterate over the all the running process
+    for proc in psutil.process_iter():
+        try:
+            # Check if process name contains the given name string.
+            if processName.lower() in proc.name().lower() and user_name == proc.username():
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False
 
 
 def check_available_nodes():
@@ -24,6 +41,9 @@ def check_available_nodes():
             available_nodes[name] = gpu_ids
     return available_nodes
 
+
+if checkIfProcessRunning('remote_scheduler'):
+    exit()
 
 if __name__ == '__main__':
     while 1:
