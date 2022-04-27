@@ -3,10 +3,27 @@ import glob
 import pickle
 import time
 from config import AUTOBOT_NODELIST
+import psutil
 
 stats_dir = '/project_data/ramanan/mengtial/nodestats'
 queue_dir = '/tmp/chester_queue'
 check_interval = 1
+user_name = 'zixuanhu'
+
+
+def checkIfProcessRunning(processName):
+    '''
+    Check if there is any running process that contains the given name processName.
+    '''
+    # Iterate over the all the running process
+    for proc in psutil.process_iter():
+        try:
+            # Check if process name contains the given name string.
+            if processName.lower() in proc.name().lower() and user_name == proc.username():
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False
 
 
 def check_available_nodes():
@@ -25,6 +42,8 @@ def check_available_nodes():
     return available_nodes
 
 
+if checkIfProcessRunning('remote_scheduler'):
+    exit()
 while 1:
     time.sleep(check_interval)
 
@@ -49,5 +68,3 @@ while 1:
                     os.system(f"ssh {real_node} \'nohup bash {script} &")  # TODO redirect output
                     os.system(f'rm {script}')
                     gpu_ids.pop(0)
-
-
