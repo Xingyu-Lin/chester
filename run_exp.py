@@ -18,6 +18,7 @@ from chester import config, config_ec2
 from chester.slurm import to_slurm_command
 from chester.utils_s3 import launch_ec2, s3_sync_code
 
+
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
 
@@ -445,9 +446,11 @@ def run_experiment_lite(
             # query_yes_no('Confirm: Syncing code to {}:{}'.format(mode, remote_dir))
             rsync_code(remote_host=mode, remote_dir=remote_dir)
             data_dir = os.path.join('data', 'local', exp_prefix, task['exp_name'])
+            remote_script_name = os.path.join(remote_dir, data_dir, task['exp_name'])
             header = '#nodelist ' + ','.join(config.AUTOBOT_NODELIST)
-            header = header + "\n#CHESTEROUT " + os.path.join(remote_dir, data_dir, 'chester.out') + " # STDOUT"
-            header = header + "\n#CHESTERERR " + os.path.join(remote_dir, data_dir, 'chester.err') + " # STDERR"
+            header = header + "\n#CHESTEROUT " + os.path.join(remote_dir, data_dir, 'chester.out')
+            header = header + "\n#CHESTERERR " + os.path.join(remote_dir, data_dir, 'chester.err')
+            header = header + "\n#CHESTERSCRIPT " + remote_script_name
             if simg_dir.find('$') == -1:
                 simg_dir = osp.join(remote_dir, simg_dir)
 
@@ -470,19 +473,24 @@ def run_experiment_lite(
                 print("; ".join(command_list))
             command = "\n".join(command_list)
             script_name = './' + task['exp_name']
-            remote_script_name = os.path.join(remote_dir, data_dir, task['exp_name'])
-            # now = datetime.datetime.now(dateutil.tz.tzlocal())
-            # curr_timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
             scheduler_script_name = os.path.join(config.CHESTER_QUEUE_DIR, task['exp_name'])
             with open(script_name, 'w') as f:
                 f.write(command)
             os.system("ssh {host} \'{cmd}\'".format(host=mode, cmd='mkdir -p ' + os.path.join(remote_dir, data_dir)))
             os.system('scp {f1} {host}:{f2}'.format(f1=script_name, f2=remote_script_name, host=mode))  # Copy script
             os.system('scp {f1} {host}:{f2}'.format(f1=script_name, f2=scheduler_script_name, host=mode))
-            # if not dry:
-            #     os.system("ssh " + mode + " \'sbatch " + remote_script_name + "\'")  # Launch
             # Cleanup
             os.remove(script_name)
+        # Open scheduler if there is not one currently running
+        # Redirect the output of the remote scheduler to the log file
+        log_file = os.path.join(config.CHESTER_QUEUE_DIR, 'logs/', 'log.txt')
+        cmd = "ssh {host} \'{cmd} > {output}&\'".format(host=mode,
+                                                        cmd=f'cd {remote_dir} && . ./prepare_1.0.sh && nohup python chester/remote_scheduler.py',
+                                                        output=log_file)
+        if dry:
+            print(cmd)
+        else:
+            os.system(cmd)
     elif mode == 'csail':
         # Launcher is running on the compute node, so no needed to sync codes
         available_nodes = []

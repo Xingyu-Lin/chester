@@ -7,8 +7,6 @@ PROJECT_PATH = osp.abspath(osp.join(osp.dirname(__file__), '..'))
 
 LOG_DIR = os.path.join(PROJECT_PATH, "data")
 
-CHESTER_QUEUE_DIR = '/tmp/chester_scheduler_xlin3/'
-
 # Make sure to use absolute path
 REMOTE_DIR = {
     'seuss': '/home/xlin3/Projects/dynamic_abstraction',
