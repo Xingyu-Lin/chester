@@ -33,6 +33,7 @@ if __name__ == '__main__':
         sorted_tasks = sorted(tasks_with_time)
         # check if any GPUs are available
         available_GPUs = check_available_nodes()  # Dictionary: {node_name, [available_gpu_id])...]
+        available_GPUS = {'autobot-0-25': [0, 1, 2, 3, 4, 5, 6, 7, 8]}  # Temporary
         timelog('Available GPUs: ' + str(available_GPUs))
 
         succ_tasks = 0
