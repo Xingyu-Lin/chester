@@ -100,7 +100,7 @@ def to_slurm_command(params, header, python_command="python", remote_dir='~/',
         else:
             sing_prefix = '/bin/bash -c'
         sing_commands = list()
-        if compile_script is None or 'prepare' not in compile_script :
+        if compile_script is None or 'prepare' not in compile_script:
             sing_commands.append('. ./prepare_1.0.sh')
         if set_egl_gpu:
             sing_commands.append('export EGL_GPU=$SLURM_JOB_GRES')
@@ -108,7 +108,7 @@ def to_slurm_command(params, header, python_command="python", remote_dir='~/',
         if compile_script is not None:
             sing_commands.append(compile_script)
         if wait_compile is not None:
-            sing_commands.append('sleep '+str(int(wait_compile)))
+            sing_commands.append('sleep ' + str(int(wait_compile)))
 
     if pre_commands is not None:
         command_list.extend(pre_commands)
