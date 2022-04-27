@@ -4,4 +4,5 @@ AUTOBOT_NODELIST= [
     '1-1', '1-6',                                                   # 10x2080 + 40 cpus
 ]
 GPU_STATE_DIR = '/project_data/ramanan/mengtial/nodestats'
-CHESTER_QUEUE_DIR = '/home/xlin3/chester_scheduler'
+CHESTER_QUEUE_DIR = '/home/xlin3/chester_scheduler/queues'
+CHESTER_CHEDULER_LOG_DIR = '/home/xlin3/chester_scheduler/logs/'
