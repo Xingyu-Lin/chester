@@ -7,6 +7,7 @@ from chester import config
 from chester.utils_logger import timelog
 import sys
 import psutil
+
 check_interval = 10  # Check every 10 seconds for available GPUs
 user_name = 'xlin3'
 
@@ -54,7 +55,9 @@ if __name__ == '__main__':
         sorted_tasks = sorted(tasks_with_time)
         # check if any GPUs are available
         available_GPUs = check_available_nodes()  # Dictionary: {node_name, [available_gpu_id])...]
-        available_GPUs = {'autobot-0-29': [0, 1, 2, 3, 4, 5, 6, 7, 8]}  # Temporary
+        # available_GPUs = {'autobot-0-11': [0, 1, 2, 3]}  # Temporary
+        available_GPUs = {'autobot-0-9': [0, 1, 2, 3],
+                          'autobot-0-17': [0, 1, 2, 3]}  # Temporary
         timelog('Available GPUs: ' + str(available_GPUs))
 
         succ_tasks = 0
