@@ -56,8 +56,8 @@ if __name__ == '__main__':
         # check if any GPUs are available
         available_GPUs = check_available_nodes()  # Dictionary: {node_name, [available_gpu_id])...]
         # available_GPUs = {'autobot-0-11': [0, 1, 2, 3]}  # Temporary
-        available_GPUs = {'autobot-0-9': [0, 1, 2, 3],
-                          'autobot-0-17': [0, 1, 2, 3]}  # Temporary
+        # available_GPUs = {'autobot-0-9': [0, 1, 2, 3],
+        #                   'autobot-0-17': [0, 1, 2, 3]}  # Temporary
         timelog('Available GPUs: ' + str(available_GPUs))
 
         succ_tasks = 0
