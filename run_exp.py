@@ -272,6 +272,7 @@ def run_experiment_lite(
   wait_subprocess=True,
   compile_script=None,
   wait_compile=None,
+  is_vnice=False,
   **kwargs):
     """
     Serialize the stubbed method call and run the experiment using the specified mode.
@@ -472,6 +473,7 @@ def run_experiment_lite(
                 compile_script=compile_script,
                 wait_compile=wait_compile,
                 set_egl_gpu=True,
+                is_vnice=is_vnice,
                 slurm_exists=False
             )
             if print_command:
