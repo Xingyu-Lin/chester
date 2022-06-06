@@ -474,6 +474,7 @@ def run_experiment_lite(
                 wait_compile=wait_compile,
                 set_egl_gpu=True,
                 is_vnice=is_vnice,
+                slurm_exists=False
             )
             if print_command:
                 print("; ".join(command_list))

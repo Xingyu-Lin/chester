@@ -5,10 +5,11 @@ import pickle
 import time
 from chester import config
 from chester.utils_logger import timelog
+import sys
 import psutil
 
 check_interval = 10  # Check every 10 seconds for available GPUs
-user_name = 'zixuanhu'
+user_name = 'xlin3'
 
 
 def checkIfProcessRunning(processName):
@@ -47,12 +48,16 @@ if checkIfProcessRunning('remote_scheduler'):
 
 if __name__ == '__main__':
     while 1:
+        timelog('Scheduler checking available GPUs...')
         # check jobs in the queue
         tasks = glob.glob(os.path.join(config.CHESTER_QUEUE_DIR, '*'))
         tasks_with_time = [(os.path.getmtime(t), t) for t in tasks if os.path.isfile(t)]
         sorted_tasks = sorted(tasks_with_time)
         # check if any GPUs are available
         available_GPUs = check_available_nodes()  # Dictionary: {node_name, [available_gpu_id])...]
+        # available_GPUs = {'autobot-0-11': [0, 1, 2, 3]}  # Temporary
+        # available_GPUs = {'autobot-0-9': [0, 1, 2, 3],
+        #                   'autobot-0-17': [0, 1, 2, 3]}  # Temporary
         timelog('Available GPUs: ' + str(available_GPUs))
 
         succ_tasks = 0
@@ -92,4 +97,5 @@ if __name__ == '__main__':
         if succ_tasks == len(sorted_tasks):
             timelog(f'All {succ_tasks} jobs done!')
             break
+        sys.stdout.flush()
         time.sleep(check_interval)
