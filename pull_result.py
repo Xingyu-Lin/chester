@@ -15,7 +15,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.folder = args.folder.rstrip('/')
-    if args.folder.rfind('/') !=-1:
+    if args.folder.rfind('/') != -1:
         local_dir = os.path.join('./data', args.host, args.folder[:args.folder.rfind('/')])
     else:
         local_dir = os.path.join('./data', args.host)
