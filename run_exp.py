@@ -517,7 +517,11 @@ def run_experiment_lite(
                 print(command)
             remote_dir = config.REMOTE_DIR[mode]
             print
-
+    elif mode =='cluster':
+        remote_dir = config.REMOTE_DIR[mode]
+        simg_dir = None
+        # query_yes_no('Confirm: Syncing code to {}:{}'.format(mode, remote_dir))
+        rsync_code(remote_host=mode, remote_dir=remote_dir)
     elif mode == 'ec2':
         # if docker_image is None:
         #     docker_image = config.DOCKER_IMAGE

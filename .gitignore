@@ -1,5 +1,5 @@
 rsync_exclude
 rsync_include
-config_private.py
+config.py
 *__pycache__*
 .idea
