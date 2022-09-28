@@ -498,7 +498,7 @@ def run_experiment_lite(
                 # log_file = os.path.join(config.CHESTER_CHEDULER_LOG_DIR, f'{t}.txt')
                 log_file = os.path.join(config.CHESTER_CHEDULER_LOG_DIR, 'log.txt')
                 cmd = "ssh {host} \'{cmd} > {output}&\'".format(host=mode,
-                                                                cmd=f'cd {remote_dir} && . ./prepare_1.0.sh && nohup python chester/scheduler/remote_scheduler.py',
+                                                                cmd=f'cd {remote_dir} && . ./prepare.sh && nohup python chester/scheduler/remote_scheduler.py',
                                                                 output=log_file)
                 if dry:
                     print(cmd)
@@ -517,11 +517,45 @@ def run_experiment_lite(
                 print(command)
             remote_dir = config.REMOTE_DIR[mode]
             print
-    elif mode =='cluster':
+    elif mode =='rll':
         remote_dir = config.REMOTE_DIR[mode]
         simg_dir = None
         # query_yes_no('Confirm: Syncing code to {}:{}'.format(mode, remote_dir))
         rsync_code(remote_host=mode, remote_dir=remote_dir)
+
+        for task in batch_tasks:
+            data_dir = os.path.join('data', 'local', exp_prefix, task['exp_name'])
+            header = config.REMOTE_HEADER[mode]
+            header = header + "\n#SBATCH -o " + os.path.join(remote_dir, data_dir, 'slurm.out') + " # STDOUT"
+            header = header + "\n#SBATCH -e " + os.path.join(remote_dir, data_dir, 'slurm.err') + " # STDERR"
+            command_list = to_slurm_command(
+                task,
+                use_gpu=use_gpu,
+                modules=config.MODULES[mode],
+                cuda_module=None,
+                header=header,
+                python_command=python_command,
+                script=osp.join(remote_dir, script),
+                simg_dir=simg_dir,
+                remote_dir=remote_dir,
+                mount_options=config.REMOTE_MOUNT_OPTION[mode],
+                compile_script=compile_script,
+                wait_compile=wait_compile,
+                set_egl_gpu=False
+            )
+            if print_command:
+                print("; ".join(command_list))
+            command = "\n".join(command_list)
+            script_name = './' + task['exp_name']
+            remote_script_name = os.path.join(remote_dir, data_dir, task['exp_name'])
+            with open(script_name, 'w') as f:
+                f.write(command)
+            os.system("ssh {host} \'{cmd}\'".format(host=mode, cmd='mkdir -p ' + os.path.join(remote_dir, data_dir)))
+            os.system('scp {f1} {host}:{f2}'.format(f1=script_name, f2=remote_script_name, host=mode))  # Copy script
+            if not dry:
+                os.system("ssh " + mode + " \'sbatch " + remote_script_name + "\'")  # Launch
+            # Cleanup
+            os.remove(script_name)
     elif mode == 'ec2':
         # if docker_image is None:
         #     docker_image = config.DOCKER_IMAGE

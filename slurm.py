@@ -68,7 +68,6 @@ def to_slurm_command(params, header, python_command="python", remote_dir='~/',
     :param use_gpu:
     :return:
     """
-    assert simg_dir is not None
     command = python_command + " " + script
     if is_vnice:
         command = '/project_data/ramanan/mengtial/scripts/vnice/vnice.sh ' + command
@@ -91,8 +90,7 @@ def to_slurm_command(params, header, python_command="python", remote_dir='~/',
 
         for remote_module in modules:
             command_list.append('module load ' + remote_module)
-        if use_gpu:
-            assert cuda_module is not None
+        if use_gpu and cuda_module is not None:
             command_list.append('module load ' + cuda_module)
         command_list.append('cd {}'.format(remote_dir))
         # First execute a bash program inside the container and then run all the following commands
@@ -107,7 +105,7 @@ def to_slurm_command(params, header, python_command="python", remote_dir='~/',
             sing_prefix = '/bin/bash -c'
         sing_commands = list()
         if compile_script is None or 'prepare' not in compile_script:
-            sing_commands.append('. ./prepare_1.0.sh')
+            sing_commands.append('. ./prepare.sh')
         if set_egl_gpu:
             sing_commands.append('export EGL_GPU=$SLURM_JOB_GRES')
             sing_commands.append('echo $EGL_GPU')
