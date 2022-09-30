@@ -4,7 +4,6 @@ import logging, sys
 from maniskill2_learn.utils.meta.env_var import get_world_rank, get_world_size, is_debug_mode
 from collections import OrderedDict
 
-
 logger_initialized = OrderedDict()
 
 
@@ -14,7 +13,7 @@ class CustomFormatter(logging.Formatter):
     red = "\x1b[31;21m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format = f"%(name)s - (%(filename)s:%(lineno)d) - %(levelname)s - %(asctime)s - %(message)s"
+    format = f"%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)d) (%(name)s) %(message)s"
 
     FORMATS = {
         logging.DEBUG: grey + format + reset,
@@ -62,29 +61,30 @@ def get_logger(name=None, with_stream=True, log_file=None, log_level=logging.INF
     if with_stream:
         handlers.append(logging.StreamHandler())
 
-    rank = get_world_rank()
-    if rank == 0 and log_file is not None:
-        file_handler = logging.FileHandler(log_file, "w")
-        handlers.append(file_handler)
-
     formatter = CustomFormatter(datefmt="%Y-%m-%d %H:%M")
-    log_fmt = f"%(name)s - (%(filename)s:%(lineno)d) - %(levelname)s - %(asctime)s - %(message)s"
+    log_fmt = f"[%(levelname)s] (%(filename)s:%(lineno)d) %(name)s %(asctime)s | %(message)s"
     file_formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d,%H:%M:%S")
 
+    rank = get_world_rank()
+    if rank == 0: # For evaluation, this is all 0
+        if log_file is not None:
+            file_handler = logging.FileHandler(log_file, "w")
+            handlers.append(file_handler)
+        file_log_level = logging.DEBUG
+    else:
+        file_log_level = log_level = logging.ERROR
+
     logger.handlers = []
-
-    if not (rank == 0 or is_debug_mode()) or not with_stream:
-        log_level = logging.ERROR
-
+    logger.setLevel(logging.DEBUG)  # Level set to lowest in order to be overriden by file handlers
     for handler in handlers:
         if isinstance(handler, logging.FileHandler):
             handler.setFormatter(file_formatter)
+            handler.setLevel(file_log_level)  # Always output debug
             logger.addHandler(handler)
         else:
             handler.setFormatter(formatter)
+            handler.setLevel(log_level)
             logger.addHandler(handler)
-
-    logger.setLevel(log_level)
     logger_initialized[name] = log_level
     return logger
 
@@ -118,7 +118,8 @@ def print_log(msg, logger="print", level=logging.INFO):
     elif isinstance(logger, str) or logger is None:
         get_logger(logger).log(level, msg)
     else:
-        raise TypeError(f'logger should be either a logging.Logger object, str, "silent" or None, ' f"but got {type(logger)}")
+        raise TypeError(
+            f'logger should be either a logging.Logger object, str, "silent" or None, ' f"but got {type(logger)}")
 
 
 def flush_print(*args):
