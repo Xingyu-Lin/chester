@@ -100,17 +100,23 @@ class TensorBoardOutputFormat(InstantWriter):
         self.writer.close()
 
 
-class WandbOutputFormat(KVWriter):
+class WandbOutputFormat(InstantWriter):
     """
     Dumps key/value pairs into wandb's numeric format.
     """
+
     def __init__(self, exp_name, cfg):
         wandb.init(project=PROJECT_NAME,
                    name=exp_name,
+                   group=cfg['wandb_group'],
                    config=cfg)
 
-    def writekvs(self, kvs):
-        wandb.log(**kvs)
+    # TODO merge this into the ExpLogger class
+    def add_prefix(self, kvs, tag_name):
+        return {f"{tag_name}/{k}": v for k, v in kvs.items()}
+
+    def write_now(self, kvs, n_iter, tag_name="train", *args, **kwargs):
+        wandb.log(self.add_prefix(kvs, tag_name), step=n_iter)
 
     def close(self):
         wandb.finish()
@@ -192,6 +198,7 @@ class ExpLogger(object):
 
     # Logging API, forwarded
     # ----------------------------------------
+
     def logkv(self, key, val):
         self.name2val[key] = val
 
@@ -201,6 +208,9 @@ class ExpLogger(object):
         for fmt in self.output_formats:
             if isinstance(fmt, InstantWriter):
                 fmt.write_now(d, *args, **kwargs)
+            elif isinstance(fmt, KVWriter):
+                fmt.writekvs(d)
+                self.dumpkvs()
 
     def logkv_mean(self, key, val):
         if val is None:
