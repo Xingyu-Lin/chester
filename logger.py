@@ -66,7 +66,7 @@ def get_logger(name=None, with_stream=True, log_file=None, log_level=logging.INF
     file_formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d,%H:%M:%S")
 
     rank = get_world_rank()
-    if rank == 0: # For evaluation, this is all 0
+    if rank == 0:  # For evaluation, this is all 0
         if log_file is not None:
             file_handler = logging.FileHandler(log_file, "w")
             handlers.append(file_handler)

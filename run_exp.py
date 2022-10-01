@@ -254,26 +254,26 @@ remote_confirmed = False
 
 
 def run_experiment_lite(
-  stub_method_call=None,
-  batch_tasks=None,
-  exp_prefix="experiment",
-  exp_name=None,
-  log_dir=None,
-  script='chester/run_exp_worker.py',  # TODO: change this before making pip package
-  python_command="python",
-  mode="local",
-  use_gpu=False,
-  dry=False,
-  env=None,
-  variant=None,
-  use_cloudpickle=True,
-  pre_commands=None,
-  print_command=False,
-  wait_subprocess=True,
-  compile_script=None,
-  wait_compile=None,
-  is_vnice=False,
-  **kwargs):
+        stub_method_call=None,
+        batch_tasks=None,
+        exp_prefix="experiment",
+        exp_name=None,
+        log_dir=None,
+        script='chester/run_exp_worker.py',  # TODO: change this before making pip package
+        python_command="python",
+        mode="local",
+        use_gpu=False,
+        dry=False,
+        env=None,
+        variant=None,
+        use_cloudpickle=True,
+        pre_commands=None,
+        print_command=False,
+        wait_subprocess=True,
+        compile_script=None,
+        wait_compile=None,
+        is_vnice=False,
+        **kwargs):
     """
     Serialize the stubbed method call and run the experiment using the specified mode.
     :param stub_method_call: A stubbed method call.
@@ -310,6 +310,21 @@ def run_experiment_lite(
     if mode == 'ec2':
         query_yes_no('Confirm: Launching jobs to ec2')
 
+    def get_file_count(mode, log_dir):
+        "Create the direcotry apart from counting the number of files in it"
+        if mode in ['seuss', 'cluster']:
+            subprocess.call(['ssh', mode, 'mkdir -p ' + log_dir])
+            return int(subprocess.check_output(['ssh', mode, 'ls', '-l', log_dir + ' | wc -l']))
+        else:
+            os.makedirs(log_dir, exist_ok=True)
+            return len(os.listdir(log_dir))
+
+    if mode in ['seuss', 'psc', 'autobot', 'satori', 'cluster']:
+        base_log_dir = config.REMOTE_LOG_DIR[mode] + "/local/" + exp_prefix + "/"
+    else:
+        base_log_dir = config.LOG_DIR + "/local/" + exp_prefix + "/"
+    start_cnt = get_file_count(mode, base_log_dir)
+
     for task in batch_tasks:
         call = task.pop("stub_method_call")
         if use_cloudpickle:
@@ -319,17 +334,11 @@ def run_experiment_lite(
             data = base64.b64encode(pickle.dumps(call)).decode("utf-8")
         task["args_data"] = data
         exp_count += 1
-        params = dict(kwargs)
-        # TODO check params
         if task.get("exp_name", None) is None:
-            task["exp_name"] = "%s_%s_%04d" % (
-                exp_prefix, timestamp, exp_count)
+            task["exp_name"] = "%s_%04d|%s" % (exp_prefix, start_cnt + exp_count, timestamp)
         if task.get("log_dir", None) is None:
-            # TODO add remote dir here
-            if mode in ['seuss', 'psc', 'autobot', 'satori']:
-                task["log_dir"] = config.REMOTE_LOG_DIR[mode] + "/local/" + exp_prefix + "/" + task["exp_name"]
-            else:
-                task["log_dir"] = config.LOG_DIR + "/local/" + exp_prefix + "/" + task["exp_name"]
+            task["log_dir"] = base_log_dir + task["exp_name"]
+
         if task.get("variant", None) is not None:
             variant = task.pop("variant")
             if "exp_name" not in variant:
@@ -517,7 +526,7 @@ def run_experiment_lite(
                 print(command)
             remote_dir = config.REMOTE_DIR[mode]
             print
-    elif mode =='rll':
+    elif mode == 'rll':
         remote_dir = config.REMOTE_DIR[mode]
         simg_dir = None
         # query_yes_no('Confirm: Syncing code to {}:{}'.format(mode, remote_dir))

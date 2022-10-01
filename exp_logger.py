@@ -10,6 +10,8 @@ import tempfile
 from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
+import wandb
+from chester.config import PROJECT_NAME
 
 LOG_OUTPUT_FORMATS = ['csv', 'tensorboard']
 
@@ -25,7 +27,7 @@ class InstantWriter(object):
 
 
 class CSVOutputFormat(KVWriter):
-    def __init__(self, filename):
+    def __init__(self, filename, *args, **kwargs):
         self.file = open(filename, 'w+t')
         self.keys = []
         self.sep = ','
@@ -65,7 +67,7 @@ class TensorBoardOutputFormat(InstantWriter):
     Dumps key/value pairs into TensorBoard's numeric format.
     """
 
-    def __init__(self, log_dir):
+    def __init__(self, log_dir, *args, **kwargs):
         os.makedirs(log_dir, exist_ok=True)
         from torch.utils.tensorboard import SummaryWriter
         self.writer = SummaryWriter(log_dir)
@@ -102,26 +104,26 @@ class WandbOutputFormat(KVWriter):
     """
     Dumps key/value pairs into wandb's numeric format.
     """
-
-    def __init__(self, dir):
-        raise NotImplementedError
+    def __init__(self, exp_name, cfg):
+        wandb.init(project=PROJECT_NAME,
+                   name=exp_name,
+                   config=cfg)
 
     def writekvs(self, kvs):
-        raise NotImplementedError
+        wandb.log(**kvs)
 
     def close(self):
-        raise NotImplementedError
+        wandb.finish()
 
 
-def make_output_format(format, ev_dir, log_suffix=''):
+def make_output_format(format, ev_dir, exp_name, cfg):
     os.makedirs(ev_dir, exist_ok=True)
     if format == 'csv':
-        return CSVOutputFormat(osp.join(ev_dir, 'progress%s.csv' % log_suffix))
+        return CSVOutputFormat(osp.join(ev_dir, 'progress.csv'))
     elif format == 'tensorboard':
-        return TensorBoardOutputFormat(osp.join(ev_dir, 'tf_logs%s' % log_suffix))
+        return TensorBoardOutputFormat(osp.join(ev_dir, 'tf_logs'))
     elif format == 'wandb':
-        assert False
-        return WandbOutputFormat()
+        return WandbOutputFormat(exp_name, cfg)
     else:
         raise ValueError('Unknown format specified: %s' % (format,))
 
@@ -181,6 +183,7 @@ def get_dir():
 
 class ExpLogger(object):
     CURRENT = None
+
     def __init__(self, dir, output_formats):
         self.name2val = defaultdict(float)  # values this iteration
         self.name2cnt = defaultdict(int)
@@ -226,7 +229,7 @@ class ExpLogger(object):
             fmt.close()
 
 
-def configure(dir=None, add_formats=None, exp_name=None):
+def configure(dir=None, add_formats=None, exp_name=None, cfg=None):
     if dir is None:
         # Default exp name
         dir = osp.join(tempfile.gettempdir(),
@@ -239,5 +242,5 @@ def configure(dir=None, add_formats=None, exp_name=None):
     if add_formats is not None:
         format_strs = format_strs + add_formats
 
-    output_formats = [make_output_format(f, dir) for f in format_strs]
+    output_formats = [make_output_format(f, dir, exp_name, cfg) for f in format_strs]
     ExpLogger.CURRENT = ExpLogger(dir=dir, output_formats=output_formats)
