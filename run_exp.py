@@ -243,8 +243,9 @@ def variant(*args, **kwargs):
 
 
 def rsync_code(remote_host, remote_dir):
-    os.system(
-        'rsync -avzh --delete --include-from=\'./chester/rsync_include\' --exclude-from=\'./chester/rsync_exclude\' ./ ' + remote_host + ':' + remote_dir)
+    command = 'rsync -avzh --delete --include-from=\'./chester/rsync_include\' --exclude-from=\'./chester/rsync_exclude\' ./ ' + remote_host + ':' + remote_dir
+    print("Sync command: ", command)
+    os.system(command)
 
 
 exp_count = 0
@@ -314,6 +315,11 @@ def run_experiment_lite(
         "Create the direcotry apart from counting the number of files in it"
         if mode in ['seuss', 'rll']:
             subprocess.call(['ssh', mode, 'mkdir -p ' + log_dir])
+            # ls = str(subprocess.check_output(['ssh', mode, 'ls', log_dir]))
+            # if ls == "b''":
+            #     return 0
+            # else:
+            #     print('file count:', ls, int(subprocess.check_output(['ssh', mode, 'ls', '-l', log_dir + ' | wc -l'])))
             return int(subprocess.check_output(['ssh', mode, 'ls', '-l', log_dir + ' | wc -l']))
         else:
             os.makedirs(log_dir, exist_ok=True)
@@ -333,9 +339,10 @@ def run_experiment_lite(
         else:
             data = base64.b64encode(pickle.dumps(call)).decode("utf-8")
         task["args_data"] = data
-        exp_count += 1
+
         if task.get("exp_name", None) is None:
-            task["exp_name"] = "%s_%04d_%s" % (exp_prefix, start_cnt + exp_count, timestamp)
+            task["exp_name"] = "%s_%04d_%s" % (exp_prefix, start_cnt, timestamp)
+        exp_count += 1
         if task.get("log_dir", None) is None:
             task["log_dir"] = base_log_dir + task["exp_name"]
 

@@ -2,12 +2,9 @@ wandb
 *.img
 *__pycache__*
 build
-data/local
-data/pretrained
-data/*
+/data
 .idea
 .git
-DPI-Net
 videos
 imgs
 debug
