@@ -312,14 +312,14 @@ def run_experiment_lite(
 
     def get_file_count(mode, log_dir):
         "Create the direcotry apart from counting the number of files in it"
-        if mode in ['seuss', 'cluster']:
+        if mode in ['seuss', 'rll']:
             subprocess.call(['ssh', mode, 'mkdir -p ' + log_dir])
             return int(subprocess.check_output(['ssh', mode, 'ls', '-l', log_dir + ' | wc -l']))
         else:
             os.makedirs(log_dir, exist_ok=True)
             return len(os.listdir(log_dir))
 
-    if mode in ['seuss', 'psc', 'autobot', 'satori', 'cluster']:
+    if mode in ['seuss', 'psc', 'autobot', 'satori', 'rll']:
         base_log_dir = config.REMOTE_LOG_DIR[mode] + "/local/" + exp_prefix + "/"
     else:
         base_log_dir = config.LOG_DIR + "/local/" + exp_prefix + "/"
@@ -335,7 +335,7 @@ def run_experiment_lite(
         task["args_data"] = data
         exp_count += 1
         if task.get("exp_name", None) is None:
-            task["exp_name"] = "%s_%04d|%s" % (exp_prefix, start_cnt + exp_count, timestamp)
+            task["exp_name"] = "%s_%04d_%s" % (exp_prefix, start_cnt + exp_count, timestamp)
         if task.get("log_dir", None) is None:
             task["log_dir"] = base_log_dir + task["exp_name"]
 
