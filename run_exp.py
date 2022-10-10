@@ -244,7 +244,7 @@ def variant(*args, **kwargs):
 
 def rsync_code(remote_host, remote_dir):
     command = 'rsync -avzh --delete --include-from=\'./chester/rsync_include\' --exclude-from=\'./chester/rsync_exclude\' ./ ' + remote_host + ':' + remote_dir
-    print("Sync command: ", command)
+    # print("Sync command: ", command)
     os.system(command)
 
 
@@ -311,26 +311,6 @@ def run_experiment_lite(
     if mode == 'ec2':
         query_yes_no('Confirm: Launching jobs to ec2')
 
-    def get_file_count(mode, log_dir):
-        "Create the direcotry apart from counting the number of files in it"
-        if mode in ['seuss', 'rll']:
-            subprocess.call(['ssh', mode, 'mkdir -p ' + log_dir])
-            # ls = str(subprocess.check_output(['ssh', mode, 'ls', log_dir]))
-            # if ls == "b''":
-            #     return 0
-            # else:
-            #     print('file count:', ls, int(subprocess.check_output(['ssh', mode, 'ls', '-l', log_dir + ' | wc -l'])))
-            return int(subprocess.check_output(['ssh', mode, 'ls', '-l', log_dir + ' | wc -l']))
-        else:
-            os.makedirs(log_dir, exist_ok=True)
-            return len(os.listdir(log_dir))
-
-    if mode in ['seuss', 'psc', 'autobot', 'satori', 'rll']:
-        base_log_dir = config.REMOTE_LOG_DIR[mode] + "/local/" + exp_prefix + "/"
-    else:
-        base_log_dir = config.LOG_DIR + "/local/" + exp_prefix + "/"
-    start_cnt = get_file_count(mode, base_log_dir)
-
     for task in batch_tasks:
         call = task.pop("stub_method_call")
         if use_cloudpickle:
@@ -339,13 +319,18 @@ def run_experiment_lite(
         else:
             data = base64.b64encode(pickle.dumps(call)).decode("utf-8")
         task["args_data"] = data
-
-        if task.get("exp_name", None) is None:
-            task["exp_name"] = "%s_%04d_%s" % (exp_prefix, start_cnt, timestamp)
         exp_count += 1
+        params = dict(kwargs)
+        # TODO check params
+        if task.get("exp_name", None) is None:
+            task["exp_name"] = "%s_%s_%04d" % (
+                exp_prefix, timestamp, exp_count)
         if task.get("log_dir", None) is None:
-            task["log_dir"] = base_log_dir + task["exp_name"]
-
+            # TODO add remote dir here
+            if mode in ['seuss', 'psc''autobot', 'satori', 'rll']:
+                task["log_dir"] = config.REMOTE_LOG_DIR[mode] + "/local/" + exp_prefix + "/" + task["exp_name"]
+            else:
+                task["log_dir"] = config.LOG_DIR + "/local/" + exp_prefix + "/" + task["exp_name"]
         if task.get("variant", None) is not None:
             variant = task.pop("variant")
             if "exp_name" not in variant:
