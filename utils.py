@@ -1,3 +1,4 @@
+import os
 def set_ipdb_debugger():
     import sys
     import ipdb
@@ -12,3 +13,8 @@ def set_ipdb_debugger():
             ipdb.pm()
 
     sys.excepthook = info
+
+def rsync_code(remote_host, remote_dir):
+    command = 'rsync -avzh --delete --include-from=\'./chester/rsync_include\' --exclude-from=\'./chester/rsync_exclude\' ./ ' + remote_host + ':' + remote_dir
+    # print("Sync command: ", command)
+    os.system(command)

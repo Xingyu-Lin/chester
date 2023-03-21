@@ -17,7 +17,7 @@ from chester import config, config_ec2
 
 from chester.slurm import to_slurm_command
 from chester.utils_s3 import launch_ec2, s3_sync_code
-
+from chester.utils import rsync_code
 
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
@@ -48,12 +48,11 @@ def query_yes_no(question, default="yes"):
         elif choice in valid:
             return valid[choice]
         else:
-            sys.stdout.write("Please respond with 'yes' or 'no' "
-                             "(or 'y' or 'n').\n")
-
+            sys.stdout.write(
+                "Please respond with 'yes' or 'no' "
+                "(or 'y' or 'n').\n")
 
 _find_unsafe = re.compile(r'[a-zA-Z0-9_^@%+=:,./-]').search
-
 
 def _shellquote(s):
     """Return a shell-escaped version of the string *s*."""
@@ -68,7 +67,6 @@ def _shellquote(s):
 
     return "'" + s.replace("'", "'\"'\"'") + "'"
 
-
 def _to_param_val(v):
     if v is None:
         return ""
@@ -77,9 +75,9 @@ def _to_param_val(v):
     else:
         return _shellquote(str(v))
 
-
-def to_local_command(params, python_command="python", script=osp.join(config.PROJECT_PATH,
-                                                                      'scripts/run_experiment.py'),
+def to_local_command(params, python_command="python", script=osp.join(
+    config.PROJECT_PATH,
+    'scripts/run_experiment.py'),
                      use_gpu=False):
     command = python_command + " " + script
 
@@ -102,12 +100,10 @@ def to_local_command(params, python_command="python", script=osp.join(config.PRO
             command += "  --%s %s" % (k, _to_param_val(v))
     return command
 
-
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
-
 
 class VariantDict(AttrDict):
     def __init__(self, d, hidden_keys):
@@ -116,7 +112,6 @@ class VariantDict(AttrDict):
 
     def dump(self):
         return {k: v for k, v in self.items() if k not in self._hidden_keys}
-
 
 class VariantGenerator(object):
     """
@@ -230,7 +225,6 @@ class VariantGenerator(object):
                     for last_choice in last_vals:
                         yield AttrDict(variant, **{last_key: last_choice})
 
-
 def variant(*args, **kwargs):
     def _variant(fn):
         fn.__is_variant = True
@@ -241,18 +235,10 @@ def variant(*args, **kwargs):
         return _variant(args[0])
     return _variant
 
-
-def rsync_code(remote_host, remote_dir):
-    command = 'rsync -avzh --delete --include-from=\'./chester/rsync_include\' --exclude-from=\'./chester/rsync_exclude\' ./ ' + remote_host + ':' + remote_dir
-    # print("Sync command: ", command)
-    os.system(command)
-
-
 exp_count = 0
 now = datetime.datetime.now(dateutil.tz.tzlocal())
 timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
 remote_confirmed = False
-
 
 def run_experiment_lite(
         stub_method_call=None,
@@ -498,9 +484,10 @@ def run_experiment_lite(
                 t = datetime.datetime.now(dateutil.tz.tzlocal()).strftime('%Y_%m_%d_%H_%M_%S')
                 # log_file = os.path.join(config.CHESTER_CHEDULER_LOG_DIR, f'{t}.txt')
                 log_file = os.path.join(config.CHESTER_CHEDULER_LOG_DIR, 'log.txt')
-                cmd = "ssh {host} \'{cmd} > {output}&\'".format(host=mode,
-                                                                cmd=f'cd {remote_dir} && . ./prepare.sh && nohup python chester/scheduler/remote_scheduler.py',
-                                                                output=log_file)
+                cmd = "ssh {host} \'{cmd} > {output}&\'".format(
+                    host=mode,
+                    cmd=f'cd {remote_dir} && . ./prepare.sh && nohup python chester/scheduler/remote_scheduler.py',
+                    output=log_file)
                 if dry:
                     print(cmd)
                 else:
@@ -567,24 +554,26 @@ def run_experiment_lite(
                 task["pre_commands"] = [". ./prepare_ec2.sh", 'time ./compile.sh']
             else:
                 task["pre_commands"] = [". ./prepare_ec2.sh", 'time ./' + compile_script]
-        launch_ec2(batch_tasks,
-                   exp_prefix=exp_prefix,
-                   docker_image=None,  # Currently not using docker
-                   python_command=python_command,
-                   script=script,
-                   aws_config=None,
-                   dry=dry,
-                   terminate_machine=True,
-                   use_gpu=use_gpu,
-                   code_full_path=s3_code_path,
-                   sync_s3_pkl=True,
-                   sync_s3_html=True,
-                   sync_s3_png=True,
-                   sync_s3_log=True,
-                   sync_s3_gif=True,
-                   sync_s3_mp4=True,
-                   sync_s3_pth=True,
-                   sync_s3_txt=True,
-                   sync_log_on_termination=True,
-                   periodic_sync=True,
-                   periodic_sync_interval=15)
+        launch_ec2(
+            batch_tasks,
+            exp_prefix=exp_prefix,
+            docker_image=None,  # Currently not using docker
+            python_command=python_command,
+            script=script,
+            aws_config=None,
+            dry=dry,
+            terminate_machine=True,
+            use_gpu=use_gpu,
+            code_full_path=s3_code_path,
+            sync_s3_pkl=True,
+            sync_s3_html=True,
+            sync_s3_png=True,
+            sync_s3_log=True,
+            sync_s3_gif=True,
+            sync_s3_mp4=True,
+            sync_s3_pth=True,
+            sync_s3_txt=True,
+            sync_log_on_termination=True,
+            periodic_sync=True,
+            periodic_sync_interval=15)
+

@@ -24,7 +24,8 @@ if __name__ == "__main__":
     if not args.dry:
         os.system(command)
 
-    command = """rsync -avzh --delete --progress {local_dir} {host}:{remote_data_dir}""".format(
+    # Need trailing slash to copy contents of folder
+    command = """rsync -avzh --delete --progress {local_dir}/ {host}:{remote_data_dir}/""".format(
         host=args.host,
         remote_data_dir=remote_data_dir,
         local_dir=local_dir)
